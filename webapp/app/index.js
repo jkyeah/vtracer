@@ -8,7 +8,20 @@ const img = new Image();
 const progress = document.getElementById('progressbar');
 const progressregion = document.getElementById('progressregion');
 let mode = 'spline', clustering_mode = 'color', clustering_hierarchical = 'stacked';
-
+const default_config = {
+    clustering_mode: 'color',
+    clustering_hierarchical: 'stacked',
+    filter_speckle: 4,
+    color_precision: 6,
+    layer_difference: 16,
+    mode: 'spline',
+    corner_threshold: 60,
+    length_threshold: 4,
+    splice_threshold: 45,
+    path_precision: 8,
+    max_iterations: 10,
+    path_color: "Black"
+};
 // Hide canas and svg on load
 canvas.style.display = 'none';
 svg.style.display = 'none';
@@ -43,7 +56,13 @@ document.getElementById('export').addEventListener('click', function (e) {
 
     this.download = 'export-' + new Date().toISOString().slice(0, 19).replace(/:/g, '').replace('T', ' ') + '.svg';
 });
-
+document.getElementById('btn_load_sample').addEventListener('click', function (e) {
+    reset_sample();
+});
+function reset_sample(){
+    loadConfig(default_config);
+    setSourceAndRestart('./sample.png');
+}
 // Store template config
 var presetConfigs = [
     {
@@ -187,6 +206,13 @@ function loadConfig(config) {
     globalpathprecision = config.path_precision;
     document.getElementById('pathprecisionvalue').innerHTML = globalpathprecision;
     document.getElementById('pathprecision').value = globalpathprecision;
+
+    globalmaxiterations = config.max_iterations;
+    document.getElementById('max_iterations_value').innerHTML = globalmaxiterations;
+    document.getElementById('max_iterations_slider').value = globalmaxiterations;
+
+    globalpathcolor = config.path_color;
+    document.getElementById('path_color').value = globalpathcolor;
 }
 
 // Choose template from gallery
@@ -254,7 +280,9 @@ var globalcorner = parseInt(document.getElementById('corner').value),
     globalfilterspeckle = parseInt(document.getElementById('filterspeckle').value),
     globalcolorprecision = parseInt(document.getElementById('colorprecision').value),
     globallayerdifference = parseInt(document.getElementById('layerdifference').value),
-    globalpathprecision = parseInt(document.getElementById('pathprecision').value);
+    globalpathprecision = parseInt(document.getElementById('pathprecision').value),
+    globalpathcolor = parseInt(document.getElementById('path_color').value),
+    globalmaxiterations = parseInt(document.getElementById('max_iterations_slider').value);
 
 // Load past inputs from localStorage
 /*
@@ -342,7 +370,15 @@ document.getElementById('pathprecision').addEventListener('change', function (e)
     document.getElementById('pathprecisionvalue').innerHTML = this.value;
     restart();
 });
-
+document.getElementById('max_iterations_slider').addEventListener('change', function (e) {
+    globalmaxiterations = parseInt(this.value);
+    document.getElementById('max_iterations_value').innerHTML = this.value;
+    restart();
+});
+document.getElementById('path_color').addEventListener('change', function (e) {
+    globalpathcolor = this.value;
+    restart();
+});
 // Save inputs before unloading
 /*
 window.addEventListener('beforeunload', function () {
@@ -415,13 +451,15 @@ function restart() {
         'hierarchical': clustering_hierarchical,
         'corner_threshold': deg2rad(globalcorner),
         'length_threshold': globallength,
-        'max_iterations': 10,
+        'max_iterations': globalmaxiterations, //new
         'splice_threshold': deg2rad(globalsplice),
         'filter_speckle': globalfilterspeckle*globalfilterspeckle,
         'color_precision': 8-globalcolorprecision,
         'layer_difference': globallayerdifference,
         'path_precision': globalpathprecision,
+        'path_color': globalpathcolor
     });
+    console.log('converter_params',converter_params);
     if (runner) {
         runner.stop();
     }
@@ -444,7 +482,8 @@ class ConverterRunner {
         this.converter.init();
         this.stopped = false;
         if (clustering_mode == 'binary') {
-            svg.style.background = '#000';
+            svg.style.background = '';
+            if (globalpathcolor == 'White' ) svg.style.background = '#000';
             canvas.style.display = 'none';
         } else {
             svg.style.background = '';

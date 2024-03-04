@@ -26,10 +26,9 @@
         }
         #canvas-container {
             position: absolute;
-            left: 2.5%;
-            top: 5%;
-            width: 95%;
-            height: 90%;
+            left: 50px;
+            top: 50px;
+            width: 800px;
         }
         #svg, #frame {
             position: absolute;
@@ -45,10 +44,16 @@
         }
         #options {
             position: absolute;
-            left: 2.5%;
-            top: 5%;
+            right: 50px;
+            top: 50px;
             padding: 50px;
             background: rgba(255,255,255,0.5);
+        }
+        .box-ori-img{
+            position: absolute;
+            width: 512px;
+            top: 860px;
+            left: 50px;
         }
         </style>
     </head>
@@ -68,11 +73,15 @@
                         <canvas id="frame"></canvas>
                         <svg id="svg" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
                     </div>
+                    <div id="ori_image" class="box-ori-img">
+                        <img src="./sample.png">
+                    </div>
                 </div>
             </div>
             <div id="options">
                 <div>
-                    <a class="button" id="export">Download as SVG</a>    
+                    <a class="button" id="export">Download as SVG</a>
+                    <a class="button" id="btn_load_sample">Reload</a>    
                 </div>
 
                 <p></p>
@@ -88,18 +97,24 @@
                         <button id="clustering-binary" title="Black & White (Binary Image)">B/W</button>
                         <button id="clustering-color" title="True Color Image">Color</button>
                     </div>
+                    <div>
+                    填充色：<select id="path_color">
+                            <option value="Black" selected>Black</option>
+                            <option value="White">White</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div>
                     <div>
-                        <button id="clustering-cutout" title="Shapes disjoint with others">Cutout</button>
+                        <button id="clustering-cutout" title="Shapes disjoint with others">Cutout(Bad)</button>
                         <button id="clustering-stacked" title="Stack shapes on top of another">Stacked</button>
                     </div>
                 </div>
 
                 <div>
                     <div title="Discard patches small than X px in size">
-                        Filter Speckle <span>(Cleaner)</span>
+                        Filter Speckle 噪点过滤 <span>(噪点的像素数)</span>
                     </div>
                 </div>
                 <div id="filterspecklevalue">
@@ -111,19 +126,19 @@
 
                 <div class="clustering-color-options">
                     <div title="Number of significant bits to use in a RGB channel">
-                        Color Precision <span>(More accurate)</span>
+                        Color Precision颜色精度 <span>(越大越精确)</span>
                     </div>
                 </div>
                 <div id="colorprecisionvalue" class="clustering-color-options">
                     6
                 </div>
                 <div class="clustering-color-options">
-                    <input id="colorprecision" type="range" min="1" max="8" step="1" value="6">
+                    <input id="colorprecision" type="range" min="1" max="10" step="1" value="6">
                 </div>
 
                 <div class="clustering-color-options">
                     <div title="Color difference between gradient layers">
-                        Gradient Step <span>(Less layers)</span>
+                        Gradient Step 梯度步长<span>(越大层数越少)</span>
                     </div>
                 </div>
                 <div id="layerdifferencevalue" class="clustering-color-options">
@@ -136,22 +151,23 @@
                 <p></p>
 
                 <div>
+                    ----以下参数都是调整图像平滑度----
                     <div title="Algorithm for converting clusters to shapes">
-                        Curve Fitting
+                        Curve Fitting 曲线拟合方式
                     </div>
                 </div>
 
                 <div>
                     <div>
-                        <button id="none" title="Exact cluster boundary">Pixel</button>
-                        <button id="polygon" title="Simplify to Polygon">Polygon</button>
-                        <button id="spline" class="selected" title="Smooth and Curve-fit">Spline</button>
+                        <button id="none" title="Exact cluster boundary">Pixel像素</button>
+                        <button id="polygon" title="Simplify to Polygon">Polygon多边形</button>
+                        <button id="spline" class="selected" title="Smooth and Curve-fit">Spline样条</button>
                     </div>
                 </div>
 
                 <div class="spline-options">
                     <div title="Minimum Momentary Angle (in degrees) to be considered a corner (to be kept after smoothing)">
-                        Corner Threshold <span>(Smoother)</span>
+                        Corner Threshold 角阈值 <span>(越大越平滑)</span>
                     </div>
                 </div>
                 <div id="cornervalue" class="spline-options">
@@ -163,19 +179,19 @@
 
                 <div class="spline-options">
                     <div title="Perform Iterative Subdivide Smooth until all segments are shorter than this length">
-                        Segment Length <span>(More coarse)</span>
+                        Segment Length 样条分割长度 <span>(越大越粗糙)</span>
                     </div>
                 </div>
                 <div id="lengthvalue" class="spline-options">
                     4
                 </div>
                 <div class="spline-options">
-                    <input id="length" type="range" min="3.5" max="10" step="0.5" value="4">
+                    <input id="length" type="range" min="0.5" max="15" step="0.5" value="4">
                 </div>
 
                 <div class="spline-options">
                     <div title="Minimum Angle Displacement (in degrees) to be considered a cutting point between curves">
-                        Splice Threshold <span>(More accurate)</span>
+                        Splice Threshold 曲线铰接角度阈值 <span>(越小越精确)</span>
                     </div>
                 </div>
                 <div id="splicevalue" class="spline-options">
@@ -188,7 +204,7 @@
                 <div style="display: none">
                 <div class="spline-options">
                     <div title="Number of decimal places used in svg path string">
-                        Path Precision <span>(More digits)</span>
+                        Path Precision 路径精确度 <span>(小数点位数)</span>
                     </div>
                 </div>
                 <div id="pathprecisionvalue" class="spline-options">
@@ -198,7 +214,15 @@
                     <input id="pathprecision" class="uk-range" type="range" min="0" max="16" step="1" value="8">
                 </div>
                 </div>
+                ----整体迭代次数----
+                <div id="max_iterations_value" class="spline-options">
+                    10
+                </div>
+                <div class="spline-options">
+                    <input id="max_iterations_slider" class="uk-range" type="range" min="1" max="100" step="1" value="10">
+                </div>
             </div>
+
         </div>
         <script src="./bootstrap.js"></script>
     </body>

@@ -22,6 +22,7 @@ pub struct ColorImageConverterParams {
     pub color_precision: i32,
     pub layer_difference: i32,
     pub path_precision: u32,
+    pub path_color: String,
 }
 
 #[wasm_bindgen]

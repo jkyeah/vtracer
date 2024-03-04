@@ -18,6 +18,7 @@ pub struct BinaryImageConverterParams {
     pub splice_threshold: f64,
     pub filter_speckle: usize,
     pub path_precision: u32,
+    pub path_color: String,
 }
 
 #[wasm_bindgen]
@@ -77,7 +78,11 @@ impl BinaryImageConverter {
                     self.params.max_iterations,
                     self.params.splice_threshold
                 );
-                let color = Color::color(&ColorName::White);
+                
+                let mut color = Color::color(&ColorName::Black);
+                if self.params.path_color == "White" {
+                    color = Color::color(&ColorName::White);
+                }
                 self.svg.prepend_path(
                     &paths,
                     &color,
